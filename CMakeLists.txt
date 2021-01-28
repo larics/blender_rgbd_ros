@@ -22,3 +22,8 @@ catkin_package(
   CATKIN_DEPENDS
   DEPENDS
 )
+
+catkin_install_python(
+  PROGRAMS scripts/depth_rgb_pub.py 
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
