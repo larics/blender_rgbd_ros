@@ -6,15 +6,15 @@
 
   <node pkg="nodelet" type="nodelet" name="point_cloud_xyz" 
         args="load depth_image_proc/point_cloud_xyz blender_depth_and_color_manager --no-bond">
-    <remap from="camera_info" to="camera_info"/>
-    <remap from="image_rect" to="depth_image"/>
+    <remap from="camera_info" to="depth/camera_info"/>
+    <remap from="image_rect" to="depth/image_rect_raw"/>
   </node>
 
   <node pkg="nodelet" type="nodelet" name="point_cloud_xyzrgb" 
         args="load depth_image_proc/point_cloud_xyzrgb blender_depth_and_color_manager --no-bond">
-    <remap from="rgb/camera_info" to="camera_info"/>
-    <remap from="rgb/image_rect_color" to="rgb_image"/>
-    <remap from="depth_registered/image_rect" to="depth_image"/>
+    <remap from="rgb/camera_info" to="color/camera_info"/>
+    <remap from="rgb/image_rect_color" to="color/image_raw"/>
+    <remap from="depth_registered/image_rect" to="depth/image_rect_raw"/>
   </node>
 
 

@@ -65,7 +65,7 @@ class RgbdImagePublisher:
       gt_current.pose.orientation.w = q_new[3]
       self.groundtruth_poses.poses.append(copy.deepcopy(gt_current))
     
-    self.ground_truth_pub = rospy.Publisher("ground_truth", PoseStamped, 
+    self.ground_truth_pub = rospy.Publisher("camera/ground_truth_pose", PoseStamped, 
       queue_size=1)
     # Tf2 broadcaster for world to camera transform
     self.tf2_broadcaster = tf2_ros.TransformBroadcaster()
@@ -73,12 +73,14 @@ class RgbdImagePublisher:
     # Publishers for depth and RGB images
     self.bridge = CvBridge()
     self.depth_image_scale = rospy.get_param('~depth_image/scale', 5)
-    self.depth_image_pub = rospy.Publisher("depth_image", Image, queue_size=1)
-    self.rgb_image_pub = rospy.Publisher("rgb_image", Image, queue_size=1)
+    self.depth_image_pub = rospy.Publisher("depth/image_rect_raw", Image, queue_size=1)
+    self.rgb_image_pub = rospy.Publisher("color/image_raw", Image, queue_size=1)
 
 
     # Camera info based on blender settings
-    self.camera_info_pub = rospy.Publisher("camera_info", 
+    self.color_camera_info_pub = rospy.Publisher("color/camera_info", 
+      CameraInfo, queue_size=1)
+    self.depth_camera_info_pub = rospy.Publisher("depth/camera_info", 
       CameraInfo, queue_size=1)
     self.camera_frame = rospy.get_param('~camera_info/frame_id', "camera")
     # Sensor width in mm
@@ -146,9 +148,10 @@ class RgbdImagePublisher:
 
         self.frame_counter = self.frame_counter + 1
 
-      # Publish camera info
+      # Publish camera info. At this point these two topics are the same.
       self.camera_info.header.stamp = timestamp
-      self.camera_info_pub.publish(self.camera_info)
+      self.color_camera_info_pub.publish(self.camera_info)
+      self.depth_camera_info_pub.publish(self.camera_info)
 
       # Publish ground truth
       current_gt = self.groundtruth_poses.poses[i]
