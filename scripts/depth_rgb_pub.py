@@ -5,7 +5,8 @@ __author__ = 'aivanovic'
 import sys, copy
 import rospy, tf2_ros, tf_conversions, tf
 import cv2
-import numpy, math
+import numpy as np
+import math
 from std_msgs.msg import String
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
@@ -73,6 +74,7 @@ class RgbdImagePublisher:
     # Publishers for depth and RGB images
     self.bridge = CvBridge()
     self.depth_image_scale = rospy.get_param('~depth_image/scale', 5)
+    self.depth_noise_type = rospy.get_param('~depth_image/noise_type', "none")
     self.depth_image_pub = rospy.Publisher("depth/image_rect_raw", Image, queue_size=1)
     self.rgb_image_pub = rospy.Publisher("color/image_raw", Image, queue_size=1)
 
@@ -124,16 +126,18 @@ class RgbdImagePublisher:
         depth_path = self.directory + self.depth_image_paths[i]
         #img = cv2.imread(depth_path, cv2.IMREAD_GRAYSCALE)
         img = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
-        #img = img.astype(numpy.uint16)
+        #img = img.astype(np.uint16)
         img = img/self.depth_image_scale
-        img = img.astype(numpy.uint16)
+        if self.depth_noise_type != "none":
+          img = addNoise(self.depth_noise_type, img)
+        img = img.astype(np.uint16)
         depth_img = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
         # Load rgb image
         rgb_path = self.directory + self.rgb_image_paths[i]
         img2 = cv2.imread(rgb_path, cv2.IMREAD_UNCHANGED)
         #cv2.imshow("window_name", img2)
         #cv2.waitKey(0)
-        #img2 = img2.astype(numpy.uint16)
+        #img2 = img2.astype(np.uint16)
         rgb_img = self.bridge.cv2_to_imgmsg(img2, encoding="bgra8")
 
         # Publish depth image
@@ -170,6 +174,72 @@ class RgbdImagePublisher:
       t.transform.rotation = copy.deepcopy(current_gt.pose.orientation)
       self.tf2_broadcaster.sendTransform(t)
 
+def addNoise(noise_type, image):
+  if noise_type == "gauss":
+    ch = 1
+    row = 1
+    col = 1
+    if (len(image.shape) == 2):
+      row,col = image.shape
+    else:
+      row,col,ch = image.shape
+    mean = 0
+    var = 250.0
+    sigma = var**0.5
+    if (len(image.shape) == 2):
+      gauss = np.random.normal(mean,sigma,(row,col))
+      gauss = gauss.reshape(row,col)
+    else:
+      gauss = np.random.normal(mean,sigma,(row,col,ch))
+      gauss = gauss.reshape(row,col,ch)
+    noisy = image + gauss
+    return noisy
+  elif noise_type == "s&p":
+    ch = 1
+    row = 1
+    col = 1
+    if (len(image.shape) == 2):
+      row,col = image.shape
+    else:
+      row,col,ch = image.shape
+    s_vs_p = 0.1
+    amount = 0.1
+    out = np.copy(image)
+    # Salt mode
+    num_salt = np.ceil(amount * image.size * s_vs_p)
+    coords = [np.random.randint(0, i - 1, int(num_salt))
+            for i in image.shape]
+    out[coords] = 1
+
+    # Pepper mode
+    num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
+    coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in image.shape]
+    out[coords] = 0
+    return out
+
+  elif noise_type == "poisson":
+    vals = len(np.unique(image))
+    vals = 15 ** np.ceil(np.log2(vals))
+    noisy = np.random.poisson(image * vals) / float(vals)
+    return noisy
+  elif noise_type =="speckle":
+    ch = 1
+    row = 1
+    col = 1
+    if (len(image.shape) == 2):
+      row,col = image.shape
+    else:
+      row,col,ch = image.shape
+    if (len(image.shape) == 2):
+      gauss = np.random.randn(row,col)
+      gauss = gauss.reshape(row,col)  
+    else:
+      gauss = np.random.randn(row,col,ch)
+      gauss = gauss.reshape(row,col,ch)        
+    noisy = image + 0.01*image * gauss
+    return noisy
+  else:
+    return image
 
 def main(args):
   rospy.init_node('rgbd_image_publisher', anonymous=True)
