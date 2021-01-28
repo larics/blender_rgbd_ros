@@ -1,0 +1,21 @@
+<launch>
+
+  <!-- Nodelet manager for this pipeline -->
+  <node pkg="nodelet" type="nodelet" args="manager"
+        name="blender_depth_and_color_manager" output="screen"/>
+
+  <node pkg="nodelet" type="nodelet" name="point_cloud_xyz" 
+        args="load depth_image_proc/point_cloud_xyz blender_depth_and_color_manager --no-bond">
+    <remap from="camera_info" to="camera_info"/>
+    <remap from="image_rect" to="depth_image"/>
+  </node>
+
+  <node pkg="nodelet" type="nodelet" name="point_cloud_xyzrgb" 
+        args="load depth_image_proc/point_cloud_xyzrgb blender_depth_and_color_manager --no-bond">
+    <remap from="rgb/camera_info" to="camera_info"/>
+    <remap from="rgb/image_rect_color" to="rgb_image"/>
+    <remap from="depth_registered/image_rect" to="depth_image"/>
+  </node>
+
+
+</launch>

@@ -1,0 +1,18 @@
+<launch>
+
+  <node pkg="blender_rgbd_ros" type="depth_rgb_pub.py" name="depth_rgb_pub" output="screen">
+    <param name="rate" value="24" />
+    <param name="loop_images" value="true" />
+    <param name="images_directory" value="$(find blender_rgbd_ros)/sample_dataset" />
+
+    <param name="depth_image/scale" value="5" />
+    
+    <param name="camera_info/frame_id" value="camera" />
+    <param name="camera_info/sensor_width" value="32.0" />
+    <param name="camera_info/focus" value="29.97" />
+    <param name="camera_info/width" value="640" />
+    <param name="camera_info/height" value="480" />
+    <param name="camera_info/distortion_model" value="plumb_bob" />
+  </node>
+
+</launch>

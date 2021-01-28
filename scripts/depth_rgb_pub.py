@@ -20,7 +20,7 @@ class RgbdImagePublisher:
     self.frame_counter = 0
 
     # Configure directories that contain images
-    self.directory = rospy.get_param('~directory', "sample_dataset")
+    self.directory = rospy.get_param('~images_directory', "sample_dataset")
     depth_file = open(self.directory + "/depth.txt", "r")
     rgb_file = open(self.directory + "/rgb.txt", "r")
     groundtruth_file = open(self.directory + "/groundtruth.txt", "r")
@@ -72,7 +72,7 @@ class RgbdImagePublisher:
 
     # Publishers for depth and RGB images
     self.bridge = CvBridge()
-    self.depth_image_scale = rospy.get_param('~depth_image_scale', 5)
+    self.depth_image_scale = rospy.get_param('~depth_image/scale', 5)
     self.depth_image_pub = rospy.Publisher("depth_image", Image, queue_size=1)
     self.rgb_image_pub = rospy.Publisher("rgb_image", Image, queue_size=1)
 
@@ -80,13 +80,13 @@ class RgbdImagePublisher:
     # Camera info based on blender settings
     self.camera_info_pub = rospy.Publisher("camera_info", 
       CameraInfo, queue_size=1)
-    self.camera_frame = rospy.get_param('~camera_frame', "camera")
+    self.camera_frame = rospy.get_param('~camera_info/frame_id', "camera")
     # Sensor width in mm
-    self.camera_sensor_width = rospy.get_param('~camera_sensor_width', 32.0)
-    self.camera_focus = rospy.get_param('~camera_focus', 29.47)
-    self.res_height = rospy.get_param('~height', 480)
-    self.res_width = rospy.get_param('~width', 640)
-    self.distortion_model = rospy.get_param('~distortion_model', "plumb_bob")
+    self.camera_sensor_width = rospy.get_param('~camera_info/sensor_width', 32.0)
+    self.camera_focus = rospy.get_param('~camera_info/focus', 29.47)
+    self.res_height = rospy.get_param('~camera_info/height', 480)
+    self.res_width = rospy.get_param('~camera_info/width', 640)
+    self.distortion_model = rospy.get_param('~camera_info/distortion_model', "plumb_bob")
     fx = self.camera_focus*self.res_width/self.camera_sensor_width
     fy = fx
     cx = self.res_width/2
