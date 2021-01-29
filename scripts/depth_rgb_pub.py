@@ -7,6 +7,7 @@ import rospy, tf2_ros, tf_conversions, tf
 import cv2
 import numpy as np
 import math
+import time
 from std_msgs.msg import String
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
@@ -175,6 +176,12 @@ class RgbdImagePublisher:
       self.tf2_broadcaster.sendTransform(t)
 
 def addNoise(noise_type, image):
+  if noise_type != "none":
+    im = np.ceil(image/65535.0)
+    im = im.astype(np.uint8)
+    ret,mask_image = cv2.threshold(im,0,1,cv2.THRESH_BINARY)
+    #cv2.imshow('mask', mask_image*100)
+    #cv2.waitKey(0)
   if noise_type == "gauss":
     ch = 1
     row = 1
@@ -183,6 +190,11 @@ def addNoise(noise_type, image):
       row,col = image.shape
     else:
       row,col,ch = image.shape
+    #mask_image = np.copy(image)
+    #for i in range(row):
+    #  for j in range(col):
+    #    if image[i,j] != 0:
+    #      mask_image[i,j] = 1
     mean = 0
     var = 250.0
     sigma = var**0.5
@@ -193,6 +205,7 @@ def addNoise(noise_type, image):
       gauss = np.random.normal(mean,sigma,(row,col,ch))
       gauss = gauss.reshape(row,col,ch)
     noisy = image + gauss
+    noisy = np.multiply(noisy,mask_image)
     return noisy
   elif noise_type == "s&p":
     ch = 1
@@ -215,12 +228,14 @@ def addNoise(noise_type, image):
     num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
     coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in image.shape]
     out[coords] = 0
+    out = np.multiply(out,mask_image)
     return out
 
   elif noise_type == "poisson":
     vals = len(np.unique(image))
     vals = 15 ** np.ceil(np.log2(vals))
     noisy = np.random.poisson(image * vals) / float(vals)
+    noisy = np.multiply(noisy,mask_image)
     return noisy
   elif noise_type =="speckle":
     ch = 1
