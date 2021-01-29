@@ -13,7 +13,8 @@ from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from nav_msgs.msg import Path
-from std_srvs.srv import Trigger, TriggerResponse
+from std_srvs.srv import Trigger, TriggerResponse, SetBool, SetBoolRequest, \
+  SetBoolResponse
 
 class RgbdImagePublisher:
 
@@ -111,6 +112,8 @@ class RgbdImagePublisher:
     # Subscribers and services go last
     self.trigger_loop_start_service = rospy.Service("start_image_publishing", 
       Trigger, self.triggerLoopStartCallback)
+    self.set_loop_flag_service = rospy.Service("set_loop_flag", SetBool,
+      self.setLoopFlagServiceCallback)
 
   def run(self):
     rate = rospy.Rate(self.rate)
@@ -120,8 +123,6 @@ class RgbdImagePublisher:
 
       timestamp = rospy.Time.now()
 
-      # TODO: Subscribe to loop flag topic
-      # TODO: Subscribe to trigger topic or service that sets
       #   self.frame_counter = 0. This will trigger publishing start
       if (self.loop_flag == True) or (self.frame_counter < self.n_frames):
         # Set up current frame index
@@ -188,6 +189,18 @@ class RgbdImagePublisher:
       self.frame_counter = 0
       res.success = True
       res.message = "Starting with image publish from dataset."
+
+    return res
+
+  def setLoopFlagServiceCallback(self, req):
+    res = SetBoolResponse()
+
+    self.loop_flag = req.data
+    res.success = True
+    if req.data == True:
+      res.message = "Starting publishing images in loop."
+    else:
+      res.message = "Stopping publishing images in loop."
 
     return res
 
