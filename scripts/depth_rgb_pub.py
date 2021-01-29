@@ -13,6 +13,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from nav_msgs.msg import Path
+from std_srvs.srv import Trigger, TriggerResponse
 
 class RgbdImagePublisher:
 
@@ -107,6 +108,9 @@ class RgbdImagePublisher:
     self.camera_info.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     self.camera_info.P = [fx, 0.0, cx, 0.0, 0.0, fy, cy, 0.0, 0.0, 0.0, 1.0, 0.0]
 
+    # Subscribers and services go last
+    self.trigger_loop_start_service = rospy.Service("start_image_publishing", 
+      Trigger, self.triggerLoopStartCallback)
 
   def run(self):
     rate = rospy.Rate(self.rate)
@@ -174,6 +178,18 @@ class RgbdImagePublisher:
       t.transform.translation.z = current_gt.pose.position.z
       t.transform.rotation = copy.deepcopy(current_gt.pose.orientation)
       self.tf2_broadcaster.sendTransform(t)
+
+  def triggerLoopStartCallback(self, req):
+    res = TriggerResponse()
+    if self.loop_flag == True:
+      res.success = False
+      res.message = "Node is set in loop mode."
+    else:
+      self.frame_counter = 0
+      res.success = True
+      res.message = "Starting with image publish from dataset."
+
+    return res
 
 def addNoise(noise_type, image):
   if noise_type != "none":
