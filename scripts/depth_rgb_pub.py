@@ -77,7 +77,6 @@ class RgbdImagePublisher:
     # Publishers for depth and RGB images
     self.bridge = CvBridge()
     self.depth_image_scale = rospy.get_param('~depth_image/scale', 5)
-    self.depth_noise_type = rospy.get_param('~depth_image/noise_type', "none")
     self.depth_image_pub = rospy.Publisher("depth/image_rect_raw", Image, queue_size=1)
     self.rgb_image_pub = rospy.Publisher("color/image_raw", Image, queue_size=1)
 
@@ -108,6 +107,15 @@ class RgbdImagePublisher:
     self.camera_info.K = [fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0]
     self.camera_info.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     self.camera_info.P = [fx, 0.0, cx, 0.0, 0.0, fy, cy, 0.0, 0.0, 0.0, 1.0, 0.0]
+
+    # Depth image noise parameters
+    self.depth_noise_type = rospy.get_param('~depth_image/noise_type', "none")
+    self.noise_gauss_mean = rospy.get_param('~depth_image/noise/gauss/mean', 0.0)
+    self.noise_gauss_var = rospy.get_param('~depth_image/noise/gauss/variance', 250.0)
+    self.noise_salt_pepper_ratio = rospy.get_param('~depth_image/noise/salt_pepper/ratio', 0.1)
+    self.noise_salt_pepper_amount = rospy.get_param('~depth_image/noise/salt_pepper/amount', 0.1)
+    self.noise_poisson_gain = rospy.get_param('~depth_image/noise/poisson/gain', 15.0)
+    self.noise_speckle_gain = rospy.get_param('~depth_image/noise/speckle/gain', 0.01)
 
     # Subscribers and services go last
     self.trigger_loop_start_service = rospy.Service("start_image_publishing", 
@@ -213,6 +221,7 @@ class RgbdImagePublisher:
       ret,mask_image = cv2.threshold(im,0,1,cv2.THRESH_BINARY)
       #cv2.imshow('mask', mask_image*100)
       #cv2.waitKey(0)
+
     if noise_type == "gauss":
       ch = 1
       row = 1
@@ -226,8 +235,8 @@ class RgbdImagePublisher:
       #  for j in range(col):
       #    if self.depth_image[i,j] != 0:
       #      mask_image[i,j] = 1
-      mean = 0
-      var = 250.0
+      mean = self.noise_gauss_mean
+      var = self.noise_gauss_var
       sigma = var**0.5
       if (len(self.depth_image.shape) == 2):
         gauss = np.random.normal(mean,sigma,(row,col))
@@ -238,7 +247,8 @@ class RgbdImagePublisher:
       noisy = self.depth_image + gauss
       noisy = np.multiply(noisy,mask_image)
       return noisy
-    elif noise_type == "s&p":
+
+    elif noise_type == "salt_pepper":
       ch = 1
       row = 1
       col = 1
@@ -246,8 +256,8 @@ class RgbdImagePublisher:
         row,col = self.depth_image.shape
       else:
         row,col,ch = self.depth_image.shape
-      s_vs_p = 0.1
-      amount = 0.1
+      s_vs_p = self.noise_salt_pepper_ratio
+      amount = self.noise_salt_pepper_amount
       out = np.copy(self.depth_image)
       # Salt mode
       num_salt = np.ceil(amount * self.depth_image.size * s_vs_p)
@@ -264,10 +274,11 @@ class RgbdImagePublisher:
 
     elif noise_type == "poisson":
       vals = len(np.unique(self.depth_image))
-      vals = 15 ** np.ceil(np.log2(vals))
+      vals = self.noise_poisson_gain ** np.ceil(np.log2(vals))
       noisy = np.random.poisson(self.depth_image * vals) / float(vals)
       noisy = np.multiply(noisy,mask_image)
       return noisy
+
     elif noise_type =="speckle":
       ch = 1
       row = 1
@@ -282,7 +293,7 @@ class RgbdImagePublisher:
       else:
         gauss = np.random.randn(row,col,ch)
         gauss = gauss.reshape(row,col,ch)        
-      noisy = self.depth_image + 0.01*self.depth_image * gauss
+      noisy = self.depth_image + self.noise_speckle_gain*self.depth_image * gauss
       return noisy
     else:
       return self.depth_image
