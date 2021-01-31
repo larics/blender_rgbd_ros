@@ -8,7 +8,7 @@
     <param name="depth_image/scale" value="5" />
     <!-- Depth image noise parameters -->
     <!-- Noise type can be: gauss, poisson, salt_pepper, speckle -->
-    <param name="depth_image/noise_type" value="speckle" />
+    <param name="depth_image/noise_type" value="none" />
     <param name="depth_image/noise/gauss/mean" value="0.0" />
     <param name="depth_image/noise/gauss/variance" value="250.0" />
     <param name="depth_image/noise/salt_pepper/ratio" value="0.1" />

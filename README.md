@@ -15,27 +15,94 @@ To convert images to the point cloud data, run the [depth\_image\_proc](http://w
 roslaunch blender_rgbd_ros depth_image_proc_pipeline.launch
 ```
 
-## 2. Topic overview
+## 2. Nodes
 ### 2.1 depth\_rgb\_pub.py
 #### 2.1.1 Subscribed topics
 None so far
 
 #### 2.1.2 Published topics
 ``depth/image_rect_raw`` ([sensor_msgs/Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html)) <br />
-  uint16 depth image  <br />
+  uint16 depth image. <br />
 
 ``depth/camera_info`` ([sensor_msgs/CameraInfo](http://docs.ros.org/en/api/sensor_msgs/html/msg/CameraInfo.html)) <br />
-  Camera info for depth image  <br />
+  Camera info for depth image. <br />
 
 <br />
 
 ``color/image_raw`` ([sensor_msgs/Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html)) <br />
-  Color image  <br />
+  Color image. <br />
 
 ``color/camera_info`` ([sensor_msgs/CameraInfo](http://docs.ros.org/en/api/sensor_msgs/html/msg/CameraInfo.html)) <br />
-  Camera info for color image  <br />
+  Camera info for color image. <br />
 
 <br />
 
 ``camera/ground_truth_pose`` ([geometry_msgs/PoseStamped](http://docs.ros.org/en/api/geometry_msgs/html/msg/PoseStamped.html)) <br />
-  Camera ground truth position and orientation
+  Camera ground truth position and orientation.
+
+#### 2.1.3 Services
+``start_image_publishing`` ([std_srvs/Trigger](http://docs.ros.org/en/api/std_srvs/html/srv/Trigger.html)) <br />
+  Triggers one loop of publishing images. <br />
+
+``set_loop_flag`` ([std_srvs/SetBool](http://docs.ros.org/en/api/std_srvs/html/srv/SetBool.html)) <br />
+  True: publishes images continuously. False: waits for triggering one loop of publishing images.  <br />
+
+
+#### 2.1.4 Parameters
+``rate`` (*int*) <br />
+  Loop rate in Hz. <br />
+
+``loop_images`` (*bool*) <br />
+  Flag for looping images. Can be changed through ``set_loop_flag`` service. <br />
+
+``images_directory`` (*string*) <br />
+  Path to the directory containing ground truth, depth and rgb images. <br />
+
+<br />
+**Depth image parameters**
+
+``depth_image/scale`` (*int*) <br />
+  Image scale as set in Blender plugin. <br />
+
+``depth_image/noise_type`` (*string*) <br />
+  Noise type applied to the depth image. Can be *gauss*, *poisson*, *salt\_pepper*, *speckle*. Use *none* for not applying noise. <br />
+
+``depth_image/noise/gauss/mean`` (*float*) <br />
+  Mean value for gaussian noise. <br />
+
+``depth_image/noise/gauss/variance`` (*float*) <br />
+  Variance for gaussian noise. <br />
+
+``depth_image/noise/salt_pepper/ratio`` (*float*) <br />
+  Ratio between salt and pepper. <br />
+
+``depth_image/noise/salt_pepper/amount`` (*float*) <br />
+  Intensity of salt and pepper noise. Bigger number means greater noise. <br />
+
+``depth_image/noise/poisson/gain`` (*float*) <br />
+  Poisson noise gain. <br />
+
+``depth_image/noise/speckle/gain`` (*float*) <br />
+  Speckle noise gain. <br />
+
+
+<br />
+**Camera info**
+
+``camera_info/frame_id`` (*string*) <br />
+  Frame id of the camera. <br />
+
+``camera_info/sensor_width`` (*float*) <br />
+  Sensor width in mm. <br />
+
+``camera_info/focus`` (*float*) <br />
+  Focal length in mm. <br />
+
+``camera_info/width`` (*int*) <br />
+  Image width in pixels. <br />
+
+``camera_info/height`` (*int*) <br />
+  Image height in pixels. <br />
+
+``camera_info/distortion_model`` (*string*) <br />
+  Distortion model used to rectify image. <br />
