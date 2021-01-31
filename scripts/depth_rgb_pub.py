@@ -130,14 +130,14 @@ class RgbdImagePublisher:
 
         # Load depth image
         depth_path = self.directory + self.depth_image_paths[i]
-        #img = cv2.imread(depth_path, cv2.IMREAD_GRAYSCALE)
-        img = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
-        #img = img.astype(np.uint16)
-        img = img/self.depth_image_scale
+        #self.depth_image = cv2.imread(depth_path, cv2.IMREAD_GRAYSCALE)
+        self.depth_image = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+        #self.depth_image = self.depth_image.astype(np.uint16)
+        self.depth_image = self.depth_image/self.depth_image_scale
         if self.depth_noise_type != "none":
-          img = addNoise(self.depth_noise_type, img)
-        img = img.astype(np.uint16)
-        depth_img = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
+          self.depth_image = self.addNoise(self.depth_noise_type)
+        self.depth_image = self.depth_image.astype(np.uint16)
+        depth_img_ros = self.bridge.cv2_to_imgmsg(self.depth_image, encoding="passthrough")
         # Load rgb image
         rgb_path = self.directory + self.rgb_image_paths[i]
         img2 = cv2.imread(rgb_path, cv2.IMREAD_UNCHANGED)
@@ -147,9 +147,9 @@ class RgbdImagePublisher:
         rgb_img = self.bridge.cv2_to_imgmsg(img2, encoding="bgra8")
 
         # Publish depth image
-        depth_img.header.stamp = timestamp
-        depth_img.header.frame_id = self.camera_frame
-        self.depth_image_pub.publish(depth_img)
+        depth_img_ros.header.stamp = timestamp
+        depth_img_ros.header.frame_id = self.camera_frame
+        self.depth_image_pub.publish(depth_img_ros)
 
         # Publish rgb img
         rgb_img.header.stamp = timestamp
@@ -204,86 +204,88 @@ class RgbdImagePublisher:
 
     return res
 
-def addNoise(noise_type, image):
-  if noise_type != "none":
-    im = np.ceil(image/65535.0)
-    im = im.astype(np.uint8)
-    ret,mask_image = cv2.threshold(im,0,1,cv2.THRESH_BINARY)
-    #cv2.imshow('mask', mask_image*100)
-    #cv2.waitKey(0)
-  if noise_type == "gauss":
-    ch = 1
-    row = 1
-    col = 1
-    if (len(image.shape) == 2):
-      row,col = image.shape
-    else:
-      row,col,ch = image.shape
-    #mask_image = np.copy(image)
-    #for i in range(row):
-    #  for j in range(col):
-    #    if image[i,j] != 0:
-    #      mask_image[i,j] = 1
-    mean = 0
-    var = 250.0
-    sigma = var**0.5
-    if (len(image.shape) == 2):
-      gauss = np.random.normal(mean,sigma,(row,col))
-      gauss = gauss.reshape(row,col)
-    else:
-      gauss = np.random.normal(mean,sigma,(row,col,ch))
-      gauss = gauss.reshape(row,col,ch)
-    noisy = image + gauss
-    noisy = np.multiply(noisy,mask_image)
-    return noisy
-  elif noise_type == "s&p":
-    ch = 1
-    row = 1
-    col = 1
-    if (len(image.shape) == 2):
-      row,col = image.shape
-    else:
-      row,col,ch = image.shape
-    s_vs_p = 0.1
-    amount = 0.1
-    out = np.copy(image)
-    # Salt mode
-    num_salt = np.ceil(amount * image.size * s_vs_p)
-    coords = [np.random.randint(0, i - 1, int(num_salt))
-            for i in image.shape]
-    out[coords] = 1
+  def addNoise(self, noise_type):
+    # TODO: If this shows up to be slow, don't return the image but rather
+    #   change it in this function.
+    if noise_type != "none":
+      im = np.ceil(self.depth_image/65535.0)
+      im = im.astype(np.uint8)
+      ret,mask_image = cv2.threshold(im,0,1,cv2.THRESH_BINARY)
+      #cv2.imshow('mask', mask_image*100)
+      #cv2.waitKey(0)
+    if noise_type == "gauss":
+      ch = 1
+      row = 1
+      col = 1
+      if (len(self.depth_image.shape) == 2):
+        row,col = self.depth_image.shape
+      else:
+        row,col,ch = self.depth_image.shape
+      #mask_image = np.copy(self.depth_image)
+      #for i in range(row):
+      #  for j in range(col):
+      #    if self.depth_image[i,j] != 0:
+      #      mask_image[i,j] = 1
+      mean = 0
+      var = 250.0
+      sigma = var**0.5
+      if (len(self.depth_image.shape) == 2):
+        gauss = np.random.normal(mean,sigma,(row,col))
+        gauss = gauss.reshape(row,col)
+      else:
+        gauss = np.random.normal(mean,sigma,(row,col,ch))
+        gauss = gauss.reshape(row,col,ch)
+      noisy = self.depth_image + gauss
+      noisy = np.multiply(noisy,mask_image)
+      return noisy
+    elif noise_type == "s&p":
+      ch = 1
+      row = 1
+      col = 1
+      if (len(self.depth_image.shape) == 2):
+        row,col = self.depth_image.shape
+      else:
+        row,col,ch = self.depth_image.shape
+      s_vs_p = 0.1
+      amount = 0.1
+      out = np.copy(self.depth_image)
+      # Salt mode
+      num_salt = np.ceil(amount * self.depth_image.size * s_vs_p)
+      coords = [np.random.randint(0, i - 1, int(num_salt))
+              for i in self.depth_image.shape]
+      out[coords] = 1
 
-    # Pepper mode
-    num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
-    coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in image.shape]
-    out[coords] = 0
-    out = np.multiply(out,mask_image)
-    return out
+      # Pepper mode
+      num_pepper = np.ceil(amount* self.depth_image.size * (1. - s_vs_p))
+      coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in self.depth_image.shape]
+      out[coords] = 0
+      out = np.multiply(out,mask_image)
+      return out
 
-  elif noise_type == "poisson":
-    vals = len(np.unique(image))
-    vals = 15 ** np.ceil(np.log2(vals))
-    noisy = np.random.poisson(image * vals) / float(vals)
-    noisy = np.multiply(noisy,mask_image)
-    return noisy
-  elif noise_type =="speckle":
-    ch = 1
-    row = 1
-    col = 1
-    if (len(image.shape) == 2):
-      row,col = image.shape
+    elif noise_type == "poisson":
+      vals = len(np.unique(self.depth_image))
+      vals = 15 ** np.ceil(np.log2(vals))
+      noisy = np.random.poisson(self.depth_image * vals) / float(vals)
+      noisy = np.multiply(noisy,mask_image)
+      return noisy
+    elif noise_type =="speckle":
+      ch = 1
+      row = 1
+      col = 1
+      if (len(self.depth_image.shape) == 2):
+        row,col = self.depth_image.shape
+      else:
+        row,col,ch = self.depth_image.shape
+      if (len(self.depth_image.shape) == 2):
+        gauss = np.random.randn(row,col)
+        gauss = gauss.reshape(row,col)  
+      else:
+        gauss = np.random.randn(row,col,ch)
+        gauss = gauss.reshape(row,col,ch)        
+      noisy = self.depth_image + 0.01*self.depth_image * gauss
+      return noisy
     else:
-      row,col,ch = image.shape
-    if (len(image.shape) == 2):
-      gauss = np.random.randn(row,col)
-      gauss = gauss.reshape(row,col)  
-    else:
-      gauss = np.random.randn(row,col,ch)
-      gauss = gauss.reshape(row,col,ch)        
-    noisy = image + 0.01*image * gauss
-    return noisy
-  else:
-    return image
+      return self.depth_image
 
 def main(args):
   rospy.init_node('rgbd_image_publisher', anonymous=True)
