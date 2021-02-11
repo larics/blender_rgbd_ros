@@ -48,9 +48,9 @@ class RgbdImagePublisher:
     q_rotation = tf.transformations.quaternion_from_euler(math.pi,0,0)
     for i in range(self.n_frames):
       self.depth_image_paths.append("/" + 
-        depth_file.readline(-1).split(" ")[1].split("\r")[0])
+        depth_file.readline(-1).split(" ")[1].splitlines()[0])
       self.rgb_image_paths.append("/" + 
-        rgb_file.readline(-1).split(" ")[1].split("\r")[0])
+        rgb_file.readline(-1).split(" ")[1].splitlines()[0])
       gt_string = groundtruth_file.readline(-1).split(" ")
       gt_current = PoseStamped()
       gt_current.pose.position.x = float(gt_string[1])
@@ -61,7 +61,7 @@ class RgbdImagePublisher:
       q_blender[0] = float(gt_string[4])
       q_blender[1] = float(gt_string[5])
       q_blender[2] = float(gt_string[6])
-      q_blender[3] = float(gt_string[7].split("\r")[0])
+      q_blender[3] = float(gt_string[7].splitlines()[0])
       q_new = tf.transformations.quaternion_multiply(q_blender, q_rotation)
       gt_current.pose.orientation.x = q_new[0]
       gt_current.pose.orientation.y = q_new[1]
