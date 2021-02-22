@@ -77,7 +77,7 @@ class RgbdImagePublisher:
     # Publishers for depth and RGB images
     self.bridge = CvBridge()
     self.depth_image_scale = rospy.get_param('~depth_image/scale', 5)
-    self.depth_image_pub = rospy.Publisher("depth/image_rect_raw", Image, queue_size=1)
+    self.depth_image_pub = rospy.Publisher("depth/image_raw", Image, queue_size=1)
     self.rgb_image_pub = rospy.Publisher("color/image_raw", Image, queue_size=1)
 
 
@@ -107,6 +107,7 @@ class RgbdImagePublisher:
     self.camera_info.K = [fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0]
     self.camera_info.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     self.camera_info.P = [fx, 0.0, cx, 0.0, 0.0, fy, cy, 0.0, 0.0, 0.0, 1.0, 0.0]
+    #self.camera_info.P = [fx, 0.0, 0.0, 0.0, fy, 0.0, cx, cy, 1.0, 0.0, 0.0, 0.0]
 
     # Depth image noise parameters
     self.depth_noise_type = rospy.get_param('~depth_image/noise_type', "none")
@@ -122,6 +123,21 @@ class RgbdImagePublisher:
       Trigger, self.triggerLoopStartCallback)
     self.set_loop_flag_service = rospy.Service("set_loop_flag", SetBool,
       self.setLoopFlagServiceCallback)
+
+    # Trying out to flatten the pointcloud
+    depth_path = self.directory + self.depth_image_paths[0]
+    self.unwarp_mask = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+    self.unwarp_mask = self.unwarp_mask.astype(np.float32)
+    row,col = self.unwarp_mask.shape
+    fov = 57.0*math.pi/180.0
+
+    frow = float(row)
+    fcol = float(col)
+    for i in range(row):
+      for j in range(col):
+        cx = math.cos((abs(i-row/2+0.5)/frow)*fov)
+        cy = math.cos((abs(j-col/2+0.5)/fcol)*fov)
+        self.unwarp_mask[i,j] = 1.0/(cx*cy)
 
   def run(self):
     rate = rospy.Rate(self.rate)
@@ -144,6 +160,7 @@ class RgbdImagePublisher:
         self.depth_image = self.depth_image/self.depth_image_scale
         if self.depth_noise_type != "none":
           self.depth_image = self.addNoise(self.depth_noise_type)
+        self.depth_image = np.multiply(self.depth_image.astype(np.float32), self.unwarp_mask)
         self.depth_image = self.depth_image.astype(np.uint16)
         depth_img_ros = self.bridge.cv2_to_imgmsg(self.depth_image, encoding="passthrough")
         # Load rgb image
