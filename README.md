@@ -21,7 +21,7 @@ roslaunch blender_rgbd_ros depth_image_proc_pipeline.launch
 None so far
 
 #### 2.1.2 Published topics
-``depth/image_rect_raw`` ([sensor_msgs/Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html)) <br />
+``depth/image_raw`` ([sensor_msgs/Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html)) <br />
   uint16 depth image. <br />
 
 ``depth/camera_info`` ([sensor_msgs/CameraInfo](http://docs.ros.org/en/api/sensor_msgs/html/msg/CameraInfo.html)) <br />
