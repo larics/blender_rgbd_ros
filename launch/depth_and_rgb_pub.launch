@@ -18,7 +18,7 @@
     
     <param name="camera_info/frame_id" value="camera" />
     <param name="camera_info/sensor_width" value="32.0" />
-    <param name="camera_info/focus" value="29.97" />
+    <param name="camera_info/focus" value="29.47" />
     <param name="camera_info/width" value="640" />
     <param name="camera_info/height" value="480" />
     <param name="camera_info/distortion_model" value="plumb_bob" />
