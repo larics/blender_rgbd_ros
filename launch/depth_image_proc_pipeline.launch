@@ -4,34 +4,17 @@
   <node pkg="nodelet" type="nodelet" args="manager"
         name="blender_depth_and_color_manager" output="screen"/>
 
-  <node pkg="image_proc" type="image_proc" name="depth_image_processing" output="screen" ns="color_image">
-    <remap from="camera_info" to="/color/camera_info"/>
-    <remap from="image_raw" to="/color/image_raw"/>
-  </node>
-
-  <node pkg="nodelet" type="nodelet" name="rectify_depth"
-        args="load image_proc/rectify blender_depth_and_color_manager --no-bond"
-  output="screen">
-    <remap from="image_mono"  to="/depth/image_raw" />
-    <remap from="camera_info" to="/depth/camera_info" />
-    <remap from="image_rect"  to="/depth/image_rect" />
-
-    <!-- Use nearest neighbor (0) interpolation so we don't streak across
-   depth boundaries -->
-    <param name="interpolation" value="0" />
-  </node>
-
   <node pkg="nodelet" type="nodelet" name="point_cloud_xyz" 
         args="load depth_image_proc/point_cloud_xyz blender_depth_and_color_manager --no-bond">
     <remap from="camera_info" to="depth/camera_info"/>
-    <remap from="image_rect" to="depth/image_rect"/>
+    <remap from="image_rect" to="depth/image_raw"/>
   </node>
 
   <node pkg="nodelet" type="nodelet" name="point_cloud_xyzrgb" 
         args="load depth_image_proc/point_cloud_xyzrgb blender_depth_and_color_manager --no-bond">
     <remap from="rgb/camera_info" to="color/camera_info"/>
-    <remap from="rgb/image_rect_color" to="color_image/image_rect_color"/>
-    <remap from="depth_registered/image_rect" to="depth/image_rect"/>
+    <remap from="rgb/image_rect_color" to="color/image_raw"/>
+    <remap from="depth_registered/image_rect" to="depth/image_raw"/>
   </node>
 
 
