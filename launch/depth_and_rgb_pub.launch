@@ -1,10 +1,10 @@
 <launch>
+  <arg name="images_directory" default="$(find blender_rgbd_ros)/sample_dataset"/>
 
   <node pkg="blender_rgbd_ros" type="depth_rgb_pub.py" name="depth_rgb_pub" output="screen">
     <param name="rate" value="24" />
     <param name="loop_images" value="true" />
-    <param name="images_directory" value="$(find blender_rgbd_ros)/sample_dataset" />
-
+    <param name="images_directory" value="$(arg images_directory)" />
     <param name="depth_image/scale" value="5" />
     <!-- Depth image noise parameters -->
     <!-- Noise type can be: gauss, poisson, salt_pepper, speckle -->
