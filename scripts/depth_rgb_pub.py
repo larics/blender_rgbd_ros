@@ -153,7 +153,9 @@ class RgbdImagePublisher:
         #cv2.imshow("window_name", img2)
         #cv2.waitKey(0)
         #img2 = img2.astype(np.uint16)
-        rgb_img = self.bridge.cv2_to_imgmsg(img2, encoding="bgra8")
+        rgb_img = self.bridge.cv2_to_imgmsg(
+          (255*(img2.astype(np.float32)/img2.max())).astype(np.uint8), 
+          encoding="bgra8")
 
         # Publish depth image
         depth_img_ros.header.stamp = timestamp
