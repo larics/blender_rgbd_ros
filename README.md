@@ -58,7 +58,7 @@ None so far
 ``images_directory`` (*string*) <br />
   Path to the directory containing ground truth, depth and rgb images. <br />
 
-<br />
+
 **Depth image parameters**
 
 ``depth_image/scale`` (*int*) <br />
@@ -86,7 +86,6 @@ None so far
   Speckle noise gain. <br />
 
 
-<br />
 **Camera info**
 
 ``camera_info/frame_id`` (*string*) <br />
