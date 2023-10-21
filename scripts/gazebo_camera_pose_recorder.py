@@ -14,7 +14,7 @@ from geometry_msgs.msg import PoseStamped
 class CameraPoseRecorder:
 
   def __init__(self):    
-    self.rate = rospy.get_param('~rate', 24)
+    self.rate = rospy.get_param('~rate', 5)
 
     self.camera_pose = PoseStamped()
     self.executing_trajectory = 0
@@ -24,16 +24,17 @@ class CameraPoseRecorder:
     self.filename = rospy.get_param('~filename', "camera_pose")
     extension = ".csv"
     i = 0
-    while os.path.exists(self.directory + "/" + self.filename  + extension):
+    check_filename = copy.deepcopy(self.filename)
+    while os.path.exists(self.directory + "/" + check_filename + extension):
       i = i + 1
-      self.filename = self.filename + "_" + str(i)
-    self.camera_poses_file = open(self.directory + "/" + self.filename + 
+      check_filename = copy.deepcopy(self.filename) + "_" + str(i)
+    self.camera_poses_file = open(self.directory + "/" + check_filename + 
       extension, "w")
 
     # Subscribers
-    rospy.Subscriber('/uav/camera/pose', PoseStamped,
+    rospy.Subscriber('camera/pose', PoseStamped,
       self.cameraPoseCallback, queue_size=1)
-    rospy.Subscriber('/uav/executing_trajectory', Int32,
+    rospy.Subscriber('reference_tracker/executing_trajectory', Int32,
       self.executingTrajectoryCallback, queue_size=1)
 
   def run(self):

@@ -1,0 +1,22 @@
+<launch>
+
+  <!-- Nodelet manager for this pipeline -->
+  <node pkg="nodelet" type="nodelet" args="manager"
+        name="realsense_depth_and_color_manager" output="screen"/>
+
+  <!--node pkg="nodelet" type="nodelet" name="point_cloud_xyz" 
+        args="load depth_image_proc/point_cloud_xyz realsense_depth_and_color_manager -%-no-bond">
+    <remap from="camera_info" to="/red/camera/depth/camera_info"/>
+    <remap from="image_rect" to="/red/camera/depth/image_rect_raw"/>
+    <remap from="points" to="/red/camera/depth_registered/points"/>
+  </node-->
+
+  <node pkg="nodelet" type="nodelet" name="point_cloud_xyzrgb" 
+        args="load depth_image_proc/point_cloud_xyzrgb realsense_depth_and_color_manager --no-bond">
+    <remap from="rgb/camera_info" to="/red/camera/color/camera_info"/>
+    <remap from="rgb/image_rect_color" to="/red/camera/color/image_rect_color"/>
+    <remap from="depth_registered/image_rect" to="/red/camera/depth/image_rect_raw"/>
+  </node>
+
+
+</launch>
